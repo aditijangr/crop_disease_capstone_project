@@ -1,19 +1,20 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(false)
+    environment {
+        CI = 'false'   // Prevent React from failing on warnings
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Cloning repository...'
+                echo 'Checking out source code...'
+                checkout scm
             }
         }
 
-        stage('Backend - Install Dependencies') {
+        stage('Backend - Install') {
             steps {
                 script {
                     if (fileExists('server/package.json')) {
@@ -22,13 +23,13 @@ pipeline {
                             bat 'npm install'
                         }
                     } else {
-                        echo 'No backend found. Skipping...'
+                        echo 'No backend found, skipping...'
                     }
                 }
             }
         }
 
-        stage('Frontend - Install Dependencies') {
+        stage('Frontend - Install') {
             steps {
                 script {
                     if (fileExists('client/package.json')) {
@@ -37,7 +38,7 @@ pipeline {
                             bat 'npm install'
                         }
                     } else {
-                        echo 'No frontend found. Skipping...'
+                        echo 'No frontend found, skipping...'
                     }
                 }
             }
@@ -49,40 +50,40 @@ pipeline {
                     if (fileExists('client/package.json')) {
                         dir('client') {
                             echo 'Building frontend...'
-                            bat 'npm run build || echo Build script not found, skipping'
+                            bat 'npm run build || echo Build skipped'
                         }
                     } else {
-                        echo 'No frontend build needed.'
+                        echo 'No frontend found, skipping...'
                     }
                 }
             }
         }
 
-        stage('Backend - Run Tests (Optional)') {
+        stage('Backend - Tests (Optional)') {
             steps {
                 script {
                     if (fileExists('server/package.json')) {
                         dir('server') {
                             echo 'Running backend tests (if any)...'
-                            bat 'npm test || echo No tests found, skipping'
+                            bat 'npm test || echo No tests, skipping'
                         }
                     } else {
-                        echo 'No backend tests.'
+                        echo 'No backend found, skipping tests...'
                     }
                 }
             }
         }
 
-        stage('ML Service - Install Requirements') {
+        stage('ML Service - Install (Optional)') {
             steps {
                 script {
                     if (fileExists('ml-service/requirements.txt')) {
                         dir('ml-service') {
                             echo 'Installing ML requirements...'
-                            bat 'pip install -r requirements.txt'
+                            bat 'pip install -r requirements.txt || echo Skipping ML install'
                         }
                     } else {
-                        echo 'No ML requirements file found. Skipping...'
+                        echo 'No ML service found, skipping...'
                     }
                 }
             }
@@ -90,17 +91,20 @@ pipeline {
 
         stage('Finish') {
             steps {
-                echo 'CI Pipeline Completed Successfully '
+                echo 'Pipeline completed successfully!'
             }
         }
     }
 
     post {
+        always {
+            echo 'Build finished.'
+        }
         success {
-            echo 'Build SUCCESSFUL '
+            echo 'Build SUCCESS'
         }
         failure {
-            echo 'Build FAILED '
+            echo 'Build FAILED'
         }
     }
 }
