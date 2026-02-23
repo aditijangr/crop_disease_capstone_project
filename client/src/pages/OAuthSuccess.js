@@ -11,15 +11,17 @@ function OAuthSuccess() {
 
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } else {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
-  }, []);
+  }, [location.search, navigate]); // ✅ FIXED
 
-  return <h2 style={{ textAlign: "center", marginTop: "100px" }}>
-    Logging you in...
-  </h2>;
+  return (
+    <h2 style={{ textAlign: "center", marginTop: "100px" }}>
+      Logging you in...
+    </h2>
+  );
 }
 
 export default OAuthSuccess;
