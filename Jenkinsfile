@@ -50,7 +50,7 @@ pipeline {
                     if (fileExists('client/package.json')) {
                         dir('client') {
                             echo 'Building frontend...'
-                            bat 'npm run build || echo Build skipped'
+                            bat 'npm run build'
                         }
                     } else {
                         echo 'No frontend found, skipping...'
@@ -65,7 +65,13 @@ pipeline {
                     if (fileExists('server/package.json')) {
                         dir('server') {
                             echo 'Running backend tests (if any)...'
-                            bat 'npm test || echo No tests, skipping'
+
+                            // Prevent pipeline failure if tests fail
+                            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                                bat 'npm test'
+                            }
+
+                            echo 'Continuing even if tests fail...'
                         }
                     } else {
                         echo 'No backend found, skipping tests...'
@@ -80,7 +86,13 @@ pipeline {
                     if (fileExists('ml-service/requirements.txt')) {
                         dir('ml-service') {
                             echo 'Installing ML requirements...'
-                            bat 'pip install -r requirements.txt || echo Skipping ML install'
+
+                            // Prevent failure if pip not installed
+                            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                                bat 'pip install -r requirements.txt'
+                            }
+
+                            echo 'Continuing even if ML install fails...'
                         }
                     } else {
                         echo 'No ML service found, skipping...'
@@ -102,6 +114,9 @@ pipeline {
         }
         success {
             echo 'Build SUCCESS'
+        }
+        unstable {
+            echo 'Build SUCCESS (with minor issues)'
         }
         failure {
             echo 'Build FAILED'
