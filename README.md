@@ -9,3 +9,5 @@ npm run dev
 ml-service
 python app.py
 # for the ml model services
+
+#adding info here
